@@ -16,13 +16,7 @@ package com.cloudant.sync.replication;
 
 import com.cloudant.http.HttpConnectionRequestInterceptor;
 import com.cloudant.http.HttpConnectionResponseInterceptor;
-import com.cloudant.mazha.ChangesResult;
-import com.cloudant.mazha.CouchClient;
-import com.cloudant.mazha.CouchException;
-import com.cloudant.mazha.DocumentRevs;
-import com.cloudant.mazha.OkOpenRevision;
-import com.cloudant.mazha.OpenRevision;
-import com.cloudant.mazha.Response;
+import com.cloudant.mazha.*;
 import com.cloudant.sync.datastore.Attachment;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevsList;
@@ -32,12 +26,7 @@ import com.cloudant.sync.util.Misc;
 
 import java.io.InputStream;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Logger;
 
 /**
@@ -165,8 +154,11 @@ public class CouchClientWrapper implements CouchDB {
             if(openRev instanceof OkOpenRevision) {
                 documentRevs.add(((OkOpenRevision) openRev).getDocumentRevs());
             } else {
-                throw new RuntimeException("Missing open revision for document:" + documentId
-                           + ", revisions: " + Arrays.asList(revisionIds));
+                MissingOpenRevision missing = (MissingOpenRevision) openRev;
+                logger.info(String.format(Locale.ENGLISH,
+                        "Revision %s  for document %s is missing, skipping.",
+                        missing.getRevision(),
+                        documentId));
             }
         }
 
