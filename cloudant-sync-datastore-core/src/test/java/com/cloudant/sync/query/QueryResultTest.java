@@ -41,14 +41,13 @@ public class QueryResultTest extends AbstractQueryTestBase {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        im = (IndexManagerImpl) cloudantSync.query;
         indexManagerDatabaseQueue = TestUtils.getDBQueue(im);
         assertThat(im, is(notNullValue()));
         assertThat(indexManagerDatabaseQueue, is(notNullValue()));
         String[] metadataTableList = new String[]{IndexManagerImpl.INDEX_METADATA_TABLE_NAME};
         SQLDatabaseTestUtils.assertTablesExist(indexManagerDatabaseQueue, metadataTableList);
 
-        queue = new SQLDatabaseQueue(factoryPath + "/" + factory.listAllDatastores().get(0) +
+        queue = new SQLDatabaseQueue(factoryPath +
             "/db.sync", new NullKeyProvider());
 
         setUpBasicQueryData();

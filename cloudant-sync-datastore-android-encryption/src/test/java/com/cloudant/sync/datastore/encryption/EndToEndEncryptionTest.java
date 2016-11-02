@@ -22,9 +22,8 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.cloudant.sync.datastore.Attachment;
-import com.cloudant.sync.datastore.CloudantSync;
+import com.cloudant.sync.datastore.DocumentStore;
 import com.cloudant.sync.datastore.ConflictException;
-import com.cloudant.sync.datastore.DatastoreManager;
 import com.cloudant.sync.datastore.DatastoreNotCreatedException;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DocumentException;
@@ -33,7 +32,6 @@ import com.cloudant.sync.datastore.UnsavedFileAttachment;
 import com.cloudant.sync.datastore.UnsavedStreamAttachment;
 import com.cloudant.sync.query.FieldSort;
 import com.cloudant.sync.query.IndexManager;
-import com.cloudant.sync.query.IndexManagerImpl;
 import com.cloudant.sync.query.QueryException;
 import com.cloudant.sync.query.QueryResult;
 import com.cloudant.sync.util.TestUtils;
@@ -94,8 +92,7 @@ public class EndToEndEncryptionTest {
     public boolean dataShouldBeEncrypted;
 
     String datastoreManagerDir;
-    DatastoreManager datastoreManager;
-    CloudantSync database;
+    DocumentStore database;
 
     // Magic bytes are "SQLite format 3" + null-terminator
     byte[] sqlCipherMagicBytes = hexStringToByteArray("53514c69746520666f726d6174203300");
@@ -104,19 +101,22 @@ public class EndToEndEncryptionTest {
     @Before
     public void setUp() throws DatastoreNotCreatedException {
         datastoreManagerDir = TestUtils.createTempTestingDir(this.getClass().getName());
-        datastoreManager = DatastoreManager.getInstance(this.datastoreManagerDir);
 
-        if(dataShouldBeEncrypted) {
-            this.database = this.datastoreManager.openDatastore(getClass().getSimpleName(),
-                    new SimpleKeyProvider(KEY));
+        if (dataShouldBeEncrypted) {
+            this.database = DocumentStore.getInstance(new File(this.datastoreManagerDir, "EndToEndEncryptionTest"), new
+                    SimpleKeyProvider(KEY));
         } else {
-            this.database = this.datastoreManager.openDatastore(getClass().getSimpleName());
+            this.database = DocumentStore.getInstance(new File(this.datastoreManagerDir, "EndToEndEncryptionTest"));
         }
     }
 
     @After
     public void tearDown() {
-        database.database.close();
+        try {
+            database.close();
+        } catch (Exception e) {
+            // ignore "documentstore already closed" exceptions
+        }
         TestUtils.deleteTempTestingDir(datastoreManagerDir);
     }
 
@@ -235,9 +235,9 @@ public class EndToEndEncryptionTest {
 
         // First close the datastore, as otherwise DatastoreManager's uniquing just
         // gives us back the existing instance which has the correct key.
-        database.database.close();
+        database.close();
 
-        this.datastoreManager.openDatastore(getClass().getSimpleName(),
+        DocumentStore.getInstance(new File(this.datastoreManagerDir, "EndToEndEncryptionTest"),
                 new SimpleKeyProvider(WRONG_KEY));
     }
 
